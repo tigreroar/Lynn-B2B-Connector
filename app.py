@@ -93,7 +93,7 @@ if "messages" not in st.session_state:
 
 # Mostrar historial
 st.title("🤝 Lynn B2B Connector")
-st.caption("Powered by Gemini 2.0 Flash")
+st.caption("Powered by Agent Coach AI")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -126,4 +126,5 @@ if prompt := st.chat_input("Enter your details here..."):
             st.markdown(ai_response)
 
     except Exception as e:
+
         st.error(f"An error occurred: {e}")
