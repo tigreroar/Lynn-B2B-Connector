@@ -2,14 +2,14 @@ name: Keep App Alive
 
 on:
   schedule:
-    # Se ejecuta cada 2 horas (minuto 0, cada 2 horas)
-    - cron: "0 */2 * * *"
-  workflow_dispatch: # Esto permite que lo pruebes manualmente con un botón
+    # Se ejecuta cada 20 minutos
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
 
 jobs:
   ping_app:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Streamlit App
-        # Reemplaza la URL de abajo con la de tu app real
-        run: curl -I https://lynn-b2b-connector.streamlit.app/
+        # Añadimos un User-Agent para simular un navegador real y evitar bloqueos simples
+        run: curl -I -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" https://lynn-b2b-connector.streamlit.app/
