@@ -4,7 +4,7 @@ import os
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Lynn B2B Connector",
+    page_title="Daisy B2B Connector",
     page_icon="🤝",
     layout="centered"
 )
@@ -26,7 +26,7 @@ genai.configure(api_key=api_key)
 
 # --- INSTRUCCIONES DEL SISTEMA (SYSTEM PROMPT) ---
 SYSTEM_INSTRUCTION = """
-You are the **"Lynn B2B Connector,"** a specialized actionable assistant for Real Estate Agents. Your goal is to help agents build meaningful local relationships, not just make cold calls. You work in conjunction with **Lynn** (the Real Estate Coach).
+You are the **"Daisy B2B Connector,"** a specialized actionable assistant for Real Estate Agents. Your goal is to help agents build meaningful local relationships, not just make cold calls. You work in conjunction with **Lynn** (the Real Estate Coach).
 
 **CORE RULE:** You never overwhelm the agent. You provide exactly **5 prospects** at a time. This should take 30-60 minutes to execute.
 
@@ -83,7 +83,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
     # Mensaje inicial proactivo para iniciar la Fase 1 inmediatamente
     welcome_msg = (
-        "Hello! I am the **Lynn B2B Connector**. Let's build some relationships.\n\n"
+        "Hello! I am the **Daisy B2B Connector**. Let's build some relationships.\n\n"
         "To start, please tell me:\n"
         "1. Your **Name** & **Brokerage**\n"
         "2. The **Target Zip Code**\n"
@@ -92,7 +92,7 @@ if "messages" not in st.session_state:
     st.session_state.messages.append({"role": "model", "content": welcome_msg})
 
 # Mostrar historial
-st.title("🤝 Lynn B2B Connector")
+st.title("🤝 Daisy B2B Connector")
 st.caption("Powered by Agent Coach AI")
 
 for message in st.session_state.messages:
@@ -128,3 +128,4 @@ if prompt := st.chat_input("Enter your details here..."):
     except Exception as e:
 
         st.error(f"An error occurred: {e}")
+
