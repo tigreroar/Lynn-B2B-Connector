@@ -9,22 +9,21 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- CONFIGURACIÓN DE API KEY Y MODELO ---
-# Se busca la API Key en st.secrets (recomendado para Streamlit Cloud) o en variables de entorno.
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-except (FileNotFoundError, KeyError):
-    # Si no estás en Streamlit Cloud, busca en variables de entorno o descomenta la línea de abajo para pruebas locales
-    # api_key = "TU_API_KEY_AQUI" 
-    api_key = os.getenv("GEMINI_API_KEY")
+# --- 1. CONFIGURACIÓN DE SEGURIDAD (RAILWAY + LOCAL) ---
+# Primero intentamos obtener la clave desde las Variables de Entorno (Railway)
+api_key = os.getenv("GEMINI_API_KEY")
 
+# Si no la encuentra (por ejemplo, estás en local), busca en st.secrets
 if not api_key:
-    st.error("⚠️ Error: Gemini API Key no encontrada. Configura .streamlit/secrets.toml o tus variables de entorno.")
-    st.stop()
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+    except (FileNotFoundError, KeyError):
+        st.error("⚠️ Error: Gemini API Key no encontrada. En Railway, ve a Variables y añade 'GEMINI_API_KEY'.")
+        st.stop()
 
 genai.configure(api_key=api_key)
 
-# --- INSTRUCCIONES DEL SISTEMA (SYSTEM PROMPT) ---
+# --- 2. INSTRUCCIONES DEL SISTEMA (DAISY B2B) ---
 SYSTEM_INSTRUCTION = """
 You are the **"Daisy B2B Connector,"** a specialized actionable assistant for Real Estate Agents. Your goal is to help agents build meaningful local relationships, not just make cold calls. You work in conjunction with **Lynn** (the Real Estate Coach).
 
@@ -66,22 +65,22 @@ End every response with this specific instruction:
 > **"Go make these 5 calls now. When you are done, go back to LYNN and report '5 Contacts Complete' to get credit for your day. Good luck!"**
 """
 
-# Configuración del modelo (Gemini 2.0 Flash)
-# Nota: Usamos 'gemini-2.0-flash-exp' que es el nombre técnico actual para el preview.
+# --- 3. CONFIGURACIÓN DEL MODELO ---
 try:
+    # AQUI ESTÁ EL CAMBIO SOLICITADO
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash-exp",
+        model_name="gemini-2.0-flash",
         system_instruction=SYSTEM_INSTRUCTION
     )
 except Exception as e:
-    st.error(f"Error cargando el modelo Gemini 2.0 Flash: {e}. Asegúrate de tener acceso a la versión experimental o cambia a gemini-1.5-flash.")
+    st.error(f"Error cargando el modelo: {e}")
     st.stop()
 
-# --- GESTIÓN DEL CHAT ---
+# --- 4. GESTIÓN DEL CHAT ---
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Mensaje inicial proactivo para iniciar la Fase 1 inmediatamente
+    # Mensaje inicial proactivo
     welcome_msg = (
         "Hello! I am the **Daisy B2B Connector**. Let's build some relationships.\n\n"
         "To start, please tell me:\n"
@@ -89,43 +88,44 @@ if "messages" not in st.session_state:
         "2. The **Target Zip Code**\n"
         "3. Pick a Tribe: **(A) Welcome Wagon**, **(B) Wealth Squad**, or **(C) House Preppers**."
     )
+    # Solo agregamos el mensaje de bienvenida si el historial está vacío
     st.session_state.messages.append({"role": "model", "content": welcome_msg})
 
-# Mostrar historial
+# Título y Créditos
 st.title("🤝 Daisy B2B Connector")
 st.caption("Powered by Agent Coach AI")
 
+# Mostrar historial de mensajes
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Capturar input del usuario
 if prompt := st.chat_input("Enter your details here..."):
-    # 1. Guardar y mostrar mensaje del usuario
+    # A. Guardar y mostrar mensaje del usuario
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 2. Generar respuesta
+    # B. Generar respuesta
     try:
-        # Reconstruir historial para la API
-        history = [
+        # Reconstruir historial para la API (excluyendo el último mensaje que enviamos ahora)
+        history_history = [
             {"role": m["role"], "parts": [m["content"]]} 
-            for m in st.session_state.messages 
-            if m["role"] != "system" # System instruction va en la init del modelo
+            for m in st.session_state.messages[:-1]
         ]
         
-        chat = model.start_chat(history=history[:-1]) # Todo menos el último mensaje que acabamos de enviar
-        response = chat.send_message(prompt)
+        # Iniciamos chat con el historial previo
+        chat = model.start_chat(history=history_history)
         
+        # Enviamos el mensaje actual
+        response = chat.send_message(prompt)
         ai_response = response.text
 
-        # 3. Guardar y mostrar respuesta del modelo
+        # C. Guardar y mostrar respuesta del modelo
         st.session_state.messages.append({"role": "model", "content": ai_response})
         with st.chat_message("model"):
             st.markdown(ai_response)
 
     except Exception as e:
-
         st.error(f"An error occurred: {e}")
-
